@@ -3,6 +3,7 @@ from customtkinter.windows.widgets.font.ctk_font import Literal
 from datetime import datetime, timezone
 import random
 import time
+from zoneinfo import ZoneInfo
 from concurrent.futures import ThreadPoolExecutor
 from file_classes import Airport
 from files import initialize_airports, initialize_country, initialize_runway
@@ -28,8 +29,11 @@ class App(ctk.CTk):
 
         self.popup_window = None
 
-        self.clock_label = self.new_label("", "normal")
-        self.clock_label.place(relx=0.99, rely=0.03, anchor=ctk.E)
+
+        self.utc_clock_label = self.new_label("", "normal", 20, family="Courier")
+        self.utc_clock_label.place(relx=0.99, rely=0.03, anchor=ctk.E)
+        self.irl_clock_label = self.new_label("2", "normal", 20, family="Courier")
+        self.irl_clock_label.place(relx=0.99, rely=0.08, anchor=ctk.E)
 
         self.departure_label = self.new_label("Departure", "bold", 18)
         self.departure_label.place(relx=0.10, rely=0.09, anchor=ctk.W)
@@ -90,7 +94,7 @@ class App(ctk.CTk):
         self.min_hour_prompt.place(relx=0.10, rely=0.45, anchor=ctk.W)
         self.min_separator_label = self.new_label(":", "normal", 12)
         self.min_separator_label.place(relx=0.14, rely=0.45, anchor=ctk.W)
-        self.min_minute_prompt = self.new_prompt("45", 35)
+        self.min_minute_prompt = self.new_prompt("30", 35)
         self.min_minute_prompt.place(relx=0.15, rely=0.45, anchor=ctk.W)
 
         self.max_label = self.new_label("Maximum Time", "normal", 12)
@@ -152,13 +156,17 @@ class App(ctk.CTk):
     def update_clock(self):
         utc_struct = time.gmtime()
         utc_time = time.strftime("%H:%M", utc_struct)
-        day_number = datetime.now(timezone.utc).strftime("%d")
+        gmt_minus_5 = ZoneInfo("America/Lima")
+        utc_day_number = datetime.now(timezone.utc).strftime("%d")
+        local_day_number = datetime.now(gmt_minus_5).strftime("%d")
+        now = datetime.now()
 
-        self.clock_label.configure(text=f"{day_number} {utc_time} UTC")
+        self.irl_clock_label.configure(text=f"{local_day_number} {now.strftime("%H:%M")} LIM")
+        self.utc_clock_label.configure(text=f"{utc_day_number} {utc_time} UTC")
         self.after(1000, self.update_clock)
 
-    def new_label(self, text, font_weight: Literal["normal", "bold"], font_size=16): # noqa: F821 # idk ??
-        return ctk.CTkLabel(self, text=f"{text}", fg_color="transparent", font=ctk.CTkFont(size=font_size, weight=font_weight))
+    def new_label(self, text, font_weight: Literal["normal", "bold"], font_size=16, family="Arial"): # noqa: F821 # idk ??
+        return ctk.CTkLabel(self, text=f"{text}", fg_color="transparent", font=ctk.CTkFont(size=font_size, weight=font_weight, family=family))
 
     def new_prompt(self, text, w=100, h=35):
         return ctk.CTkEntry(
@@ -294,8 +302,8 @@ def find_airports():
     max_minute = app.max_minute_prompt.get()
 
     if min_minute == "":
-        min_minute = "45"
-        app.min_minute_prompt.set("45")
+        min_minute = "30"
+        app.min_minute_prompt.set("30")
     if min_hour == "":
         min_hour = "00"
         app.min_hour_prompt.set("00")
