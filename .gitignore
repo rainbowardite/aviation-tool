@@ -1,5 +1,5 @@
 .git
 __pycache__
-files
+files/*
 original_files
 scratchpad.txt
