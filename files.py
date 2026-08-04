@@ -1,10 +1,21 @@
 import csv
+import sys
+import os
 from file_classes import Airport, Country, Runway
+
+def resource_path(relative_path):
+    try:
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
 
 def initialize_airports() -> dict:
     airports_by_id = {}
 
-    with open("./files/airports.csv", mode="r", encoding="utf-8") as file:
+    airport_path = resource_path("files/airports.csv")
+
+    with open(airport_path, mode="r", encoding="utf-8") as file:
         reader = csv.DictReader(file)
         for index, row in enumerate(reader):
             airport_obj = Airport(
@@ -41,7 +52,9 @@ def initialize_airports() -> dict:
 def initialize_country() -> dict:
     countries_by_code = {}
 
-    with open("./files/countries.csv", mode="r", encoding="utf-8") as file:
+    country_path = resource_path("files/countries.csv")
+
+    with open(country_path, mode="r", encoding="utf-8") as file:
         reader = csv.DictReader(file)
         for row in reader:
             countries_obj = Country(
@@ -60,7 +73,9 @@ def initialize_country() -> dict:
 def initialize_runway() -> dict:
     runways_by_id = {}
 
-    with open("./files/runways.csv", mode="r", encoding="utf-8") as file:
+    runway_path = resource_path("files/runways.csv")
+
+    with open(runway_path, mode="r", encoding="utf-8") as file:
         reader = csv.DictReader(file)
         for row in reader:
             runways_obj = Runway(
