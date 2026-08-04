@@ -32,8 +32,6 @@ class App(ctk.CTk):
 
         self.utc_clock_label = self.new_label("", "normal", 20, family="Courier")
         self.utc_clock_label.place(relx=0.99, rely=0.03, anchor=ctk.E)
-        self.irl_clock_label = self.new_label("2", "normal", 20, family="Courier")
-        self.irl_clock_label.place(relx=0.99, rely=0.08, anchor=ctk.E)
 
         self.departure_label = self.new_label("Departure", "bold", 18)
         self.departure_label.place(relx=0.10, rely=0.09, anchor=ctk.W)
@@ -156,12 +154,8 @@ class App(ctk.CTk):
     def update_clock(self):
         utc_struct = time.gmtime()
         utc_time = time.strftime("%H:%M", utc_struct)
-        gmt_minus_5 = ZoneInfo("America/Lima")
         utc_day_number = datetime.now(timezone.utc).strftime("%d")
-        local_day_number = datetime.now(gmt_minus_5).strftime("%d")
-        now = datetime.now()
 
-        self.irl_clock_label.configure(text=f"{local_day_number} {now.strftime("%H:%M")} LIM")
         self.utc_clock_label.configure(text=f"{utc_day_number} {utc_time} UTC")
         self.after(1000, self.update_clock)
 
