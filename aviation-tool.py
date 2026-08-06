@@ -3,6 +3,7 @@ from customtkinter.windows.widgets.font.ctk_font import Literal
 from datetime import datetime, timezone
 import random
 import time
+from zoneinfo import ZoneInfo
 from concurrent.futures import ThreadPoolExecutor
 from file_classes import Airport
 from files import initialize_airports, initialize_country, initialize_runway
@@ -11,9 +12,9 @@ from runway import get_runway_id
 from airport import get_airport_id, get_airport_id_from_internal
 from metar import get_metar
 from globals import AIRCRAFTS, airports, countries, runways
-from surface import appropriate_surface
 from popup import ScrollablePopup
 from helpers import distance_to_time, get_airport_info
+from clock import find_timezone_from_input
 
 ctk.set_appearance_mode("System")  # "System", "Dark", "Light"
 ctk.set_default_color_theme("dark-blue")  # "blue", "green", "dark-blue"
@@ -28,8 +29,9 @@ class App(ctk.CTk):
 
         self.popup_window = None
 
-        self.clock_label = self.new_label("", "normal")
-        self.clock_label.place(relx=0.99, rely=0.03, anchor=ctk.E)
+
+        self.utc_clock_label = self.new_label("", "normal", 20, family="Courier")
+        self.utc_clock_label.place(relx=0.99, rely=0.03, anchor=ctk.E)
 
         self.departure_label = self.new_label("Departure", "bold", 18)
         self.departure_label.place(relx=0.10, rely=0.09, anchor=ctk.W)
@@ -51,14 +53,16 @@ class App(ctk.CTk):
         self.departure_metar_category_label.place(relx=0.40, rely=0.14, anchor=ctk.W)
         self.departure_elevation_label = self.new_label("", "normal", 12) # Elevation: 0 ft
         self.departure_elevation_label.place(relx=0.50, rely=0.14, anchor=ctk.W)
+        self.departure_time_label = self.new_label("", "normal", 12) # Local Time: 00:00
+        self.departure_time_label.place(relx=0.61, rely=0.14, anchor=ctk.W)
 
         self.departure_metar_display = self.new_label("", "normal", 12) # METAR KDFW 090159Z 14010G20KT 10SM -TSRA FEW036 BKN048CB BKN065 OVC140 22/18 A2987 RMK AO2 PK WND 25032/0125 TS ONOE MOV NE EWR 29 SLP116
         self.departure_metar_display.place(relx=0.030, rely=0.20, anchor=ctk.W)
 
         self.arrival_distance_label = self.new_label("", "normal", 12)
         self.arrival_distance_label.place(relx=0.08, rely=0.26, anchor=ctk.E)
-        self.arrival_time_label = self.new_label("", "normal", 12)
-        self.arrival_time_label.place(relx=0.08, rely=0.31, anchor=ctk.E)
+        self.flight_time_label = self.new_label("", "normal", 12)
+        self.flight_time_label.place(relx=0.08, rely=0.31, anchor=ctk.E)
 
         self.arrival_label = self.new_label("Arrival", "bold", 20)
         self.arrival_label.place(relx=0.10, rely=0.25, anchor=ctk.W)
@@ -80,6 +84,8 @@ class App(ctk.CTk):
         self.arrival_metar_category_label.place(relx=0.40, rely=0.30, anchor=ctk.W)
         self.arrival_elevation_label = self.new_label("", "normal", 12)
         self.arrival_elevation_label.place(relx=0.50, rely=0.30, anchor=ctk.W)
+        self.arrival_time_label = self.new_label("", "normal", 12)
+        self.arrival_time_label.place(relx=0.61, rely=0.30, anchor=ctk.W)
 
         self.arrival_metar_display = self.new_label("", "normal", 12) # METAR KCLE 031351Z 02012KT 10SM SCT026 22/15 A2995 RMK AO2 SLP152 T02170150 $
         self.arrival_metar_display.place(relx=0.030, rely=0.36, anchor=ctk.W)
@@ -90,7 +96,7 @@ class App(ctk.CTk):
         self.min_hour_prompt.place(relx=0.10, rely=0.45, anchor=ctk.W)
         self.min_separator_label = self.new_label(":", "normal", 12)
         self.min_separator_label.place(relx=0.14, rely=0.45, anchor=ctk.W)
-        self.min_minute_prompt = self.new_prompt("45", 35)
+        self.min_minute_prompt = self.new_prompt("30", 35)
         self.min_minute_prompt.place(relx=0.15, rely=0.45, anchor=ctk.W)
 
         self.max_label = self.new_label("Maximum Time", "normal", 12)
@@ -149,16 +155,8 @@ class App(ctk.CTk):
         self.appearance_mode_optionemenu.place(relx=0.995, rely=0.97, anchor=ctk.E)
         self.appearance_mode_optionemenu.set("Dark")
 
-    def update_clock(self):
-        utc_struct = time.gmtime()
-        utc_time = time.strftime("%H:%M", utc_struct)
-        day_number = datetime.now(timezone.utc).strftime("%d")
-
-        self.clock_label.configure(text=f"{day_number} {utc_time} UTC")
-        self.after(1000, self.update_clock)
-
-    def new_label(self, text, font_weight: Literal["normal", "bold"], font_size=16): # noqa: F821 # idk ??
-        return ctk.CTkLabel(self, text=f"{text}", fg_color="transparent", font=ctk.CTkFont(size=font_size, weight=font_weight))
+    def new_label(self, text, font_weight: Literal["normal", "bold"], font_size=16, family="Arial"): # noqa: F821 # idk ??
+        return ctk.CTkLabel(self, text=f"{text}", fg_color="transparent", font=ctk.CTkFont(size=font_size, weight=font_weight, family=family))
 
     def new_prompt(self, text, w=100, h=35):
         return ctk.CTkEntry(
@@ -211,8 +209,10 @@ def clear_for_next():
     app.departure_metar_category_label.configure(text="")
     app.departure_elevation_label.configure(text="")
     app.departure_metar_display.configure(text="")
-    app.arrival_time_label.configure(text="")
+    app.flight_time_label.configure(text="")
     app.arrival_distance_label.configure(text="")
+    app.departure_time_label.configure(text="")
+    app.arrival_time_label.configure(text="")
 
 def get_airports_within_limits(departure_airport: list, min_distance: float, max_distance: float):
     departure_airport_lat = departure_airport[0].lat
@@ -294,8 +294,8 @@ def find_airports():
     max_minute = app.max_minute_prompt.get()
 
     if min_minute == "":
-        min_minute = "45"
-        app.min_minute_prompt.set("45")
+        min_minute = "30"
+        app.min_minute_prompt.set("30")
     if min_hour == "":
         min_hour = "00"
         app.min_hour_prompt.set("00")
@@ -353,7 +353,7 @@ def update_metar(phase):
             distance = get_distance(float(departure_airport[0].lat), float(departure_airport[0].long), float(airport[0].lat), float(airport[0].long))
             hour, minute = distance_to_time(distance, int(app.speed_prompt.get()))
             time = f"{hour}:{minute}"
-            app.arrival_time_label.configure(text=f"{time}")
+            app.flight_time_label.configure(text=f"{time}")
             app.arrival_distance_label.configure(text=f"{int(distance)}nm")
 
     airport = ""
@@ -363,6 +363,7 @@ def update_metar(phase):
 
         app.departure_airport_info.configure(text=f"{airport[0].name}, {airport[0].municipality} {airport[1].name}")
         app.departure_elevation_label.configure(text=f"Elevation: {airport[0].elev} ft")
+        update_location(app.departure_time_label, app.departure_prompt.get())
 
         if str(airport[0].iata) == "0":
             app.departure_iata_label.configure(text="---")
@@ -375,6 +376,7 @@ def update_metar(phase):
         set_time_distance(airport)
         app.arrival_airport_info.configure(text=f"{airport[0].name}, {airport[0].municipality} {airport[1].name}")
         app.arrival_elevation_label.configure(text=f"Elevation: {airport[0].elev} ft")
+        update_location(app.arrival_time_label, app.arrival_prompt.get())
 
         if str(airport[0].iata) == "0":
             app.arrival_iata_label.configure(text="---")
@@ -401,13 +403,50 @@ def update_aircraft():
             app.runway_length_prompt.delete(0, "end")
             app.runway_length_prompt.insert(0, f"{data.get("length")}")
 
+def update_location(clock_label, location_prompt):
+    global after_id
+
+    if location_prompt != "utc":
+        airport = get_airport_info(get_airport_id(airports, str(location_prompt).strip()))
+        new_location = f"{airport[0].municipality}, {airport[1].name}"
+    else:
+        new_location = str(location_prompt)
+
+    timezone = find_timezone_from_input(new_location)
+    if timezone:
+        app.after_cancel(str(after_id))
+        update_clock(clock_label, timezone)
+
+def update_clock(clock_label, new_location="local"):
+    global after_id
+    if new_location == "local" or new_location == "":
+        now = datetime.now().astimezone()
+        formatted_time = now.strftime("%H:%M")
+    elif new_location == "utc":
+        utc_struct = time.gmtime()
+        day_number = datetime.now(timezone.utc).strftime("%d")
+        formatted_time = time.strftime("%H:%M", utc_struct)
+        formatted_time = f"{day_number} {formatted_time}"
+    else:
+        zone_info = datetime.now(ZoneInfo(new_location))
+        formatted_time = zone_info.strftime("%H:%M")
+
+    if new_location != "utc":
+        clock_string = f"Local Time: {formatted_time}"
+    else:
+        clock_string = f"{formatted_time}"
+
+    clock_label.configure(text=clock_string)
+    after_id = app.after(1000, update_clock, clock_label, new_location)
+
 if __name__ == "__main__":
+    after_id = ""
     airports = initialize_airports()
     countries = initialize_country()
     runways = initialize_runway()
 
     app = App()
-    app.update_clock()
+    update_clock(app.utc_clock_label, "utc")
     update_aircraft()
     app.aircraft_selector.set(app.aircraft_select_options[0])
 
