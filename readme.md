@@ -2,7 +2,7 @@
 
 Find airport weather and distances to other airports within a time range
 
-#### Download the latest release or build it yourself:
+#### Download the [latest release](https://github.com/rainbowardite/aviation-tool/releases) or build it yourself:
 
 ## Clone [aviation-tool](https://github.com/rainbowardite/aviation-tool.git)
 
