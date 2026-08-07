@@ -366,7 +366,18 @@ def update_metar(phase):
         update_location(app.departure_time_label, app.departure_prompt.get())
 
         if str(airport[0].iata) == "0":
-            app.departure_iata_label.configure(text="---")
+            if str(airport[0].local_code) != 0:
+                label_string = f"{airport[0].local_code}"
+            elif str(airport[0].gps_code) != 0:
+                label_string = f"{airport[0].gps_code}"
+            elif str(airport[0].icao) != 0:
+                label_string = f"{airport[0].icao}"
+            elif str(airport[0].ident) != 0:
+                label_string = f"{airport[0].ident}"
+            else:
+                label_string = "---"
+
+            app.departure_iata_label.configure(text=label_string)
         else:
             app.departure_iata_label.configure(text=f"{airport[0].iata}")
     elif phase == "arrival" and app.arrival_prompt.get():
@@ -379,7 +390,18 @@ def update_metar(phase):
         update_location(app.arrival_time_label, app.arrival_prompt.get())
 
         if str(airport[0].iata) == "0":
-            app.arrival_iata_label.configure(text="---")
+            if str(airport[0].local_code) != 0:
+                label_string = f"{airport[0].local_code}"
+            elif str(airport[0].gps_code) != 0:
+                label_string = f"{airport[0].gps_code}"
+            elif str(airport[0].icao) != 0:
+                label_string = f"{airport[0].icao}"
+            elif str(airport[0].ident) != 0:
+                label_string = f"{airport[0].ident}"
+            else:
+                label_string = "---"
+
+            app.arrival_iata_label.configure(text=label_string)
         else:
             app.arrival_iata_label.configure(text=f"{airport[0].iata}")
 

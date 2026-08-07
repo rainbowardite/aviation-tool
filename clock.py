@@ -1,5 +1,6 @@
 from geopy.geocoders import Nominatim
 from timezonefinder import TimezoneFinder
+from typing import cast, Any
 
 def find_timezone_from_input(input):
     geolocator = Nominatim(user_agent="city_tz_linker")
@@ -7,7 +8,8 @@ def find_timezone_from_input(input):
     location = geolocator.geocode(input)
 
     if location:
-        timezone_name = timezone_finder.timezone_at(lng=location.longitude, lat=location.latitude)
+        safe_location = cast(Any, location)
+        timezone_name = timezone_finder.timezone_at(lng=safe_location.longitude, lat=safe_location.latitude)
         return timezone_name
 
     return None

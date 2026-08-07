@@ -2,9 +2,6 @@
 __pycache__
 files/*
 original_files
-scratchpad.txt
-./flight_tool.py
 
 build
 dist
-aviation-tool.spec
