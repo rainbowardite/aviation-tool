@@ -21,7 +21,7 @@ Get `airports.csv`, `countries.csv`, and `runways.csv` from [ourairports.com](ht
 `python -m PyInstaller .\aviation-tool.spec`
 
 ##### Batch File
-run batch file at `/update_executable.bat`
+run batch file at `\update_executable.bat`
 
 #### Run exe
-exe outputs to `dist/aviation-tool.exe`
+exe outputs to `dist\aviation-tool.exe`
