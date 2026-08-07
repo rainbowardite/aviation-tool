@@ -456,7 +456,7 @@ def update_clock(clock_label, new_location="local"):
     if new_location != "utc":
         clock_string = f"Local Time: {formatted_time}"
     else:
-        clock_string = f"{formatted_time} UTC"
+        clock_string = f"{formatted_time}Z"
 
     clock_label.configure(text=clock_string)
     after_id = app.after(1000, update_clock, clock_label, new_location)
