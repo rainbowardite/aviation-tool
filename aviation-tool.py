@@ -186,6 +186,9 @@ class App(ctk.CTk):
 
     def find_airports(self):
         find_airports()
+        clear_arrivals()
+        self.flight_time_label.configure(text="")
+        self.arrival_distance_label.configure(text="")
 
     def clear(self):
         self.min_hour_prompt.set("")
@@ -372,6 +375,10 @@ def update_metar(phase):
         app.departure_metar_display.configure(text="Fetching METAR")
         airport = get_airport_info(get_airport_id(airports, app.departure_prompt.get().strip()))
 
+        if len(app.departure_prompt.get()) < 4:
+            app.departure_prompt.delete(0, "end")
+            app.departure_prompt.insert(0, f"{airport[0].ident}")
+
         app.departure_airport_info.configure(text=f"{airport[0].name}, {airport[0].municipality} {airport[1].name}")
         app.departure_elevation_label.configure(text=f"Elevation: {airport[0].elev} ft")
         update_location(app.departure_time_label, app.departure_prompt.get())
@@ -394,6 +401,10 @@ def update_metar(phase):
     elif phase == "arrival" and app.arrival_prompt.get():
         app.arrival_metar_display.configure(text="Fetching METAR")
         airport = get_airport_info(get_airport_id(airports, app.arrival_prompt.get().strip()))
+
+        if len(app.arrival_prompt.get()) < 4:
+            app.arrival_prompt.delete(0, "end")
+            app.arrival_prompt.insert(0, f"{airport[0].ident}")
 
         set_time_distance(airport)
         app.arrival_airport_info.configure(text=f"{airport[0].name}, {airport[0].municipality} {airport[1].name}")
