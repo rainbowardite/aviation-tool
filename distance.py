@@ -32,6 +32,4 @@ def timecode_to_hours(timecode_str):
 def calculate_distance_from_timecode(speed_knots, timecode_str):
     hours = timecode_to_hours(timecode_str)
 
-    adjusted_speed = speed_knots - 140
-
-    return adjusted_speed * hours
+    return speed_knots * hours

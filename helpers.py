@@ -8,7 +8,7 @@ def distance_to_time(distance, speed):
         else:
             return data
 
-    time_hours = distance / (speed - 140)
+    time_hours = distance / (speed)
     hours = int(time_hours)
     minutes = int((time_hours - hours) * 60)
     return check_single_digit(hours), check_single_digit(minutes)
