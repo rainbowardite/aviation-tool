@@ -30,7 +30,7 @@ class App(ctk.CTk):
         self.popup_window = None
 
 
-        self.utc_clock_label = self.new_label("", "normal", 20, family="Courier")
+        self.utc_clock_label = self.new_label("", "bold", 20, family="Courier")
         self.utc_clock_label.place(relx=0.99, rely=0.03, anchor=ctk.E)
 
         self.departure_label = self.new_label("Departure", "bold", 18)
