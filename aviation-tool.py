@@ -30,7 +30,7 @@ class App(ctk.CTk):
         self.popup_window = None
 
 
-        self.utc_clock_label = self.new_label("", "normal", 20, family="Courier")
+        self.utc_clock_label = self.new_label("", "bold", 20, family="Courier")
         self.utc_clock_label.place(relx=0.99, rely=0.03, anchor=ctk.E)
 
         self.departure_label = self.new_label("Departure", "bold", 18)
@@ -186,6 +186,9 @@ class App(ctk.CTk):
 
     def find_airports(self):
         find_airports()
+        clear_arrivals()
+        self.flight_time_label.configure(text="")
+        self.arrival_distance_label.configure(text="")
 
     def clear(self):
         self.min_hour_prompt.set("")
@@ -200,19 +203,30 @@ class App(ctk.CTk):
     def change_appearance_mode_event(self, new_appearance_mode: str):
         ctk.set_appearance_mode(new_appearance_mode)
 
-def clear_for_next():
-    app.departure_prompt.set("")
+
+def clear_arrivals():
     app.arrival_prompt.set("")
-    app.departure_airport_info.configure(text="")
     app.arrival_airport_info.configure(text="")
+    app.arrival_iata_label.configure(text="")
+    app.arrival_metar_category_label.configure(text="")
+    app.arrival_elevation_label.configure(text="")
+    app.arrival_metar_display.configure(text="")
+    app.arrival_time_label.configure(text="")
+
+def clear_departures():
+    app.departure_prompt.set("")
+    app.departure_airport_info.configure(text="")
     app.departure_iata_label.configure(text="")
     app.departure_metar_category_label.configure(text="")
     app.departure_elevation_label.configure(text="")
     app.departure_metar_display.configure(text="")
+    app.departure_time_label.configure(text="")
+
+def clear_for_next():
+    clear_departures()
+    clear_arrivals()
     app.flight_time_label.configure(text="")
     app.arrival_distance_label.configure(text="")
-    app.departure_time_label.configure(text="")
-    app.arrival_time_label.configure(text="")
 
 def get_airports_within_limits(departure_airport: list, min_distance: float, max_distance: float):
     departure_airport_lat = departure_airport[0].lat
@@ -361,6 +375,10 @@ def update_metar(phase):
         app.departure_metar_display.configure(text="Fetching METAR")
         airport = get_airport_info(get_airport_id(airports, app.departure_prompt.get().strip()))
 
+        if len(app.departure_prompt.get()) < 4:
+            app.departure_prompt.delete(0, "end")
+            app.departure_prompt.insert(0, f"{airport[0].ident}")
+
         app.departure_airport_info.configure(text=f"{airport[0].name}, {airport[0].municipality} {airport[1].name}")
         app.departure_elevation_label.configure(text=f"Elevation: {airport[0].elev} ft")
         update_location(app.departure_time_label, app.departure_prompt.get())
@@ -383,6 +401,10 @@ def update_metar(phase):
     elif phase == "arrival" and app.arrival_prompt.get():
         app.arrival_metar_display.configure(text="Fetching METAR")
         airport = get_airport_info(get_airport_id(airports, app.arrival_prompt.get().strip()))
+
+        if len(app.arrival_prompt.get()) < 4:
+            app.arrival_prompt.delete(0, "end")
+            app.arrival_prompt.insert(0, f"{airport[0].ident}")
 
         set_time_distance(airport)
         app.arrival_airport_info.configure(text=f"{airport[0].name}, {airport[0].municipality} {airport[1].name}")
