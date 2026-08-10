@@ -7,3 +7,5 @@
 - search by "city_name country_name"
 - fix flight time calculation (kinda fixed but its sketch)
 - make search more efficient (thank u Luci)
+- clear all arrival info when find-next
+- limit results by country/region

@@ -200,19 +200,30 @@ class App(ctk.CTk):
     def change_appearance_mode_event(self, new_appearance_mode: str):
         ctk.set_appearance_mode(new_appearance_mode)
 
-def clear_for_next():
-    app.departure_prompt.set("")
+
+def clear_arrivals():
     app.arrival_prompt.set("")
-    app.departure_airport_info.configure(text="")
     app.arrival_airport_info.configure(text="")
+    app.arrival_iata_label.configure(text="")
+    app.arrival_metar_category_label.configure(text="")
+    app.arrival_elevation_label.configure(text="")
+    app.arrival_metar_display.configure(text="")
+    app.arrival_time_label.configure(text="")
+
+def clear_departures():
+    app.departure_prompt.set("")
+    app.departure_airport_info.configure(text="")
     app.departure_iata_label.configure(text="")
     app.departure_metar_category_label.configure(text="")
     app.departure_elevation_label.configure(text="")
     app.departure_metar_display.configure(text="")
+    app.departure_time_label.configure(text="")
+
+def clear_for_next():
+    clear_departures()
+    clear_arrivals()
     app.flight_time_label.configure(text="")
     app.arrival_distance_label.configure(text="")
-    app.departure_time_label.configure(text="")
-    app.arrival_time_label.configure(text="")
 
 def get_airports_within_limits(departure_airport: list, min_distance: float, max_distance: float):
     departure_airport_lat = departure_airport[0].lat
