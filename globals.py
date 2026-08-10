@@ -1,26 +1,32 @@
 AIRCRAFTS = {
     "A319":{
-        "speed":450,
+        "cruise_speed":450,
+        "speed":330,
         "length": 4460
     },
     "A320":{
-        "speed":450,
+        "cruise_speed":450,
+        "speed":330,
         "length": 4460
     },
     "A321":{
-        "speed":450,
+        "cruise_speed":450,
+        "speed":330,
         "length": 5600
     },
     "737-600":{
-        "speed":450,
+        "cruise_speed":450,
+        "speed":330,
         "length": 4265
     },
     "737-700":{
-        "speed":450,
+        "cruise_speed":450,
+        "speed":330,
         "length": 4650
     },
     "777-300ER":{
-        "speed":490,
+        "cruise_speed":490,
+        "speed":475,
         "length": 6600
     },
 }

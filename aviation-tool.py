@@ -3,9 +3,10 @@ from customtkinter.windows.widgets.font.ctk_font import Literal
 from datetime import datetime, timezone
 import random
 import time
+import sys
 from zoneinfo import ZoneInfo
 from concurrent.futures import ThreadPoolExecutor
-from file_classes import Airport
+from file_classes import Airport, Runway, Country
 from files import initialize_airports, initialize_country, initialize_runway
 from distance import get_distance, calculate_distance_from_timecode
 from runway import get_runway_id
@@ -57,7 +58,7 @@ class App(ctk.CTk):
         self.departure_time_label.place(relx=0.61, rely=0.14, anchor=ctk.W)
 
         self.departure_metar_display = self.new_label("", "normal", 12) # METAR KDFW 090159Z 14010G20KT 10SM -TSRA FEW036 BKN048CB BKN065 OVC140 22/18 A2987 RMK AO2 PK WND 25032/0125 TS ONOE MOV NE EWR 29 SLP116
-        self.departure_metar_display.place(relx=0.030, rely=0.20, anchor=ctk.W)
+        self.departure_metar_display.place(relx=0.010, rely=0.20, anchor=ctk.W)
 
         self.arrival_distance_label = self.new_label("", "normal", 12)
         self.arrival_distance_label.place(relx=0.08, rely=0.26, anchor=ctk.E)
@@ -88,7 +89,7 @@ class App(ctk.CTk):
         self.arrival_time_label.place(relx=0.61, rely=0.30, anchor=ctk.W)
 
         self.arrival_metar_display = self.new_label("", "normal", 12) # METAR KCLE 031351Z 02012KT 10SM SCT026 22/15 A2995 RMK AO2 SLP152 T02170150 $
-        self.arrival_metar_display.place(relx=0.030, rely=0.36, anchor=ctk.W)
+        self.arrival_metar_display.place(relx=0.010, rely=0.36, anchor=ctk.W)
 
         self.min_label = self.new_label("Minimum Time", "normal", 12)
         self.min_label.place(relx=0.10, rely=0.41, anchor=ctk.W)
@@ -126,25 +127,34 @@ class App(ctk.CTk):
 
         self.check_var = ctk.StringVar(value="on")
         self.checkbox = ctk.CTkCheckBox(self, text="Airports with scheduled routes only", variable=self.check_var, onvalue="on", offvalue="off") #, command=self.checkbox_event
-        self.checkbox.place(relx=0.10, rely=0.71, anchor=ctk.W)
+        self.checkbox.place(relx=0.10, rely=0.67, anchor=ctk.W)
+
+        self.sea_check_var = ctk.StringVar(value="off")
+        self.sea_checkbox = ctk.CTkCheckBox(self, text="Seaplane Bases", variable=self.sea_check_var, onvalue="on", offvalue="off") #, command=self.checkbox_event
+        self.sea_checkbox.place(relx=0.10, rely=0.72, anchor=ctk.W)
 
         self.program_output = self.new_label("", "bold", 12)
         self.program_output.place(relx=0.50, rely=0.77, anchor=ctk.CENTER)
 
-        self.clear_button = ctk.CTkButton(
-            self, text="Clear", command=self.clear, width=140, height=40
-        )
-        self.clear_button.place(relx=0.20, rely=0.85, anchor=ctk.W)
-
         self.find_button = ctk.CTkButton(
             self, text="Find Airports", command=self.find_airports, width=140, height=40
         )
-        self.find_button.place(relx=0.50, rely=0.85, anchor=ctk.CENTER)
+        self.find_button.place(relx=0.10, rely=0.85, anchor=ctk.W)
 
         self.next_button = ctk.CTkButton(
             self, text="Find Next Airports", command=self.next_airports, width=140, height=40
         )
-        self.next_button.place(relx=0.80, rely=0.85, anchor=ctk.E)
+        self.next_button.place(relx=0.30, rely=0.85, anchor=ctk.W)
+
+        self.clear_button = ctk.CTkButton(
+            self, text="Clear", command=self.clear, width=140, height=40
+        )
+        self.clear_button.place(relx=0.70, rely=0.85, anchor=ctk.E)
+
+        self.exit_button = ctk.CTkButton(
+            self, text="Exit", command=self.exit_program, width=140, height=40
+        )
+        self.exit_button.place(relx=0.90, rely=0.85, anchor=ctk.E)
 
         self.appearance_mode_optionemenu = ctk.CTkOptionMenu(
             self,
@@ -154,6 +164,9 @@ class App(ctk.CTk):
         )
         self.appearance_mode_optionemenu.place(relx=0.995, rely=0.97, anchor=ctk.E)
         self.appearance_mode_optionemenu.set("Dark")
+
+    def exit_program(self):
+        sys.exit(0)
 
     def new_label(self, text, font_weight: Literal["normal", "bold"], font_size=16, family="Arial"): # noqa: F821 # idk ??
         return ctk.CTkLabel(self, text=f"{text}", fg_color="transparent", font=ctk.CTkFont(size=font_size, weight=font_weight, family=family))
@@ -203,7 +216,6 @@ class App(ctk.CTk):
     def change_appearance_mode_event(self, new_appearance_mode: str):
         ctk.set_appearance_mode(new_appearance_mode)
 
-
 def clear_arrivals():
     app.arrival_prompt.set("")
     app.arrival_airport_info.configure(text="")
@@ -242,8 +254,13 @@ def get_airports_within_limits(departure_airport: list, min_distance: float, max
                 arrival_airport_longest_runway_length = arrival_airport_longest_runway.length
                 min_runway_length = float(app.runway_length_prompt.get())
                 if float(distance) <= max_distance and float(distance) >= min_distance and int(arrival_airport_longest_runway_length) >= min_runway_length and ((app.check_var.get() == "on" and airport.shed_serv == "yes") or app.check_var.get() == "off"):
-                    elegible_airport_ids.append(airport_id)
-                    distances.append(distance)
+                    if app.sea_check_var.get() == "off":
+                        if airport.type != "seaplane_base":
+                            elegible_airport_ids.append(airport_id)
+                            distances.append(distance)
+                    else:
+                        elegible_airport_ids.append(airport_id)
+                        distances.append(distance)
     return elegible_airport_ids, distances
 
 def check_min_runway_length(airport_id):
@@ -334,7 +351,7 @@ def find_airports():
 
     app.program_output.configure(text=f"Finding airports between {min_time} ({min_distance}nm) and {max_time} ({max_distance}nm) from {departure_airport[0].ident}")
 
-    executor = ThreadPoolExecutor(max_workers=1)
+    executor = ThreadPoolExecutor()
     future = executor.submit(get_airports_within_limits, departure_airport, min_distance, max_distance)
     future.add_done_callback(handle_result)
 
@@ -428,7 +445,7 @@ def update_metar(phase):
             app.arrival_iata_label.configure(text=f"{airport[0].iata}")
 
     if airport:
-        executor = ThreadPoolExecutor(max_workers=1)
+        executor = ThreadPoolExecutor() # max_workers=1
         future = executor.submit(metar_thread, airport, phase)
         future.add_done_callback(lambda f: "")
     else:
@@ -437,7 +454,6 @@ def update_metar(phase):
             app.departure_metar_display.configure(text=phrase)
         else :
             app.arrival_metar_display.configure(text=phrase)
-
 
 def update_aircraft():
     for aircraft, data in AIRCRAFTS.items():
@@ -483,13 +499,41 @@ def update_clock(clock_label, new_location="local"):
     clock_label.configure(text=clock_string)
     after_id = app.after(1000, update_clock, clock_label, new_location)
 
+
+def files_initialized(future):
+    global airports
+    global countries
+    global runways
+
+    try:
+        data = future.result()
+        airports = data[0]
+        countries = data[1]
+        runways = data[2]
+
+        app.program_output.configure(text="")
+
+    except Exception as e:
+        print(f"Thread generated an exception: {e}")
+        app.program_output.configure(text=f"Thread generated an exception: {e}")
+
+def initialize_files():
+    apt = initialize_airports()
+    ctry = initialize_country()
+    rwy = initialize_runway()
+
+    return apt, ctry, rwy
+
 if __name__ == "__main__":
     after_id = ""
-    airports = initialize_airports()
-    countries = initialize_country()
-    runways = initialize_runway()
-
     app = App()
+
+    app.program_output.configure(text="Initializing Data Files")
+
+    executor = ThreadPoolExecutor()
+    future = executor.submit(initialize_files)
+    future.add_done_callback(files_initialized)
+
     update_clock(app.utc_clock_label, "utc")
     update_aircraft()
     app.aircraft_selector.set(app.aircraft_select_options[0])
